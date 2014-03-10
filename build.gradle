@@ -23,9 +23,17 @@ task downloadPromptList(type: Download) {
     outputs.files file("$buildDir/$promptsFile")
 }
 
-def maskTeXChars(String str) {
-    // mask special characters for latex
-    return str.replaceAll("([&_])", '\\\\$1')
+task generateText(dependsOn: downloadPromptList) {
+    def promptsFile = downloadPromptList.outputs.files.singleFile
+    inputs.files promptsFile
+    outputs.files fileTree(buildDir).include('*.txt')
+    doLast {
+        promptsFile.eachLine {
+            def fields = it.split('[()" ]{2}')
+            def (basename, text) = fields[1..2]
+            file("$buildDir/${basename}.txt").withWriter { it.println(text) }
+        }
+    }
 }
 
 task synthesizeBeep(type: Exec) {
@@ -34,6 +42,11 @@ task synthesizeBeep(type: Exec) {
     executable 'sox'
     args '-n', beepFileName, 'synth', beepDuration, 'sin', beepFrequency
     workingDir buildDir
+}
+
+def maskTeXChars(String str) {
+    // mask special characters for latex
+    return str.replaceAll("([&_])", '\\\\$1')
 }
 
 task generateLaTeX(dependsOn: downloadPromptList) {
