@@ -17,6 +17,40 @@ task downloadPromptList(type: Download) {
     outputs.files file("$buildDir/$promptsFile")
 }
 
+def maskTeXChars(String str) {
+    // mask special characters for latex
+    return str.replaceAll("([&_])", '\\\\$1')
+}
+
+task generateLaTeX(dependsOn: downloadPromptList) {
+    def promptsFile = downloadPromptList.outputs.files.singleFile
+    def texFile = file("$buildDir/prompts.tex")
+    inputs.files promptsFile
+    outputs.files texFile
+    doLast {
+        texFile.withWriter { tex ->
+            tex.println """% !TEX encoding = UTF-8 Unicode
+                           |\\documentclass[aspectratio=1610]{beamer}
+                           |\\usepackage[utf8]{inputenc}
+                           |\\newcommand*{\\prompt}[2]{%
+                           |\\begin{frame}{#1}
+                           |\\centering
+                           |{\\Huge #2}
+                           |\\end{frame}}
+                           |\\title{${maskTeXChars(project.name)}}
+                           |\\date{}
+                           |\\begin{document}
+                           |\\frame{\\titlepage}""".stripMargin()
+            promptsFile.eachLine {
+                def fields = maskTeXChars(it).split('[()" ]{2}')
+                def (basename, text) = fields[1..2]
+                tex.println "\\prompt{$basename}{$text}"
+            }
+            tex.println "\\end{document}"
+        }
+    }
+}
+
 task wrapper(type: Wrapper) {
     gradleVersion = '1.11'
 }
