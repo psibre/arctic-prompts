@@ -51,6 +51,15 @@ task generateLaTeX(dependsOn: downloadPromptList) {
     }
 }
 
+task compileLaTeX(type: Exec, dependsOn: generateLaTeX) {
+    def texFile = generateLaTeX.outputs.files.singleFile
+    inputs.files texFile
+    outputs.files "$buildDir/prompts.pdf"
+    executable 'latexmk'
+    args '-quiet', '-pdf', texFile
+    workingDir buildDir
+}
+
 task wrapper(type: Wrapper) {
     gradleVersion = '1.11'
 }
