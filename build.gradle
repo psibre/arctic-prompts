@@ -9,6 +9,8 @@ buildscript {
     }
 }
 
+buildDir.mkdirs()
+
 import de.undercouch.gradle.tasks.download.Download
 
 task downloadPromptList(type: Download) {
@@ -24,6 +26,14 @@ def maskTeXChars(String str) {
     return str.replaceAll("([&_])", '\\\\$1')
 }
 
+task synthesizeBeep(type: Exec) {
+    def beepFile = file("$buildDir/$beepFileName")
+    outputs.files beepFile
+    executable 'sox'
+    args '-n', beepFileName, 'synth', beepDuration, 'sin', beepFrequency
+    workingDir buildDir
+}
+
 task generateLaTeX(dependsOn: downloadPromptList) {
     def promptsFile = downloadPromptList.outputs.files.singleFile
     def texFile = file("$buildDir/prompts.tex")
@@ -34,10 +44,12 @@ task generateLaTeX(dependsOn: downloadPromptList) {
             tex.println """% !TEX encoding = UTF-8 Unicode
                            |\\documentclass[aspectratio=${aspectRatio.replace('x', '')}]{beamer}
                            |\\usepackage[utf8]{inputenc}
+                           |\\usepackage[activate=pageopen, transparent, noplaybutton]{media9}
                            |\\newcommand*{\\prompt}[2]{%
                            |\\begin{frame}{#1}
                            |\\centering
                            |{\\Huge #2}
+                           |\\includemedia[addresource=$beepFileName, width=1em, height=1ex, flashvars={source=$beepFileName&autoPlay=true&hideBar=true}]{}{APlayer.swf}
                            |\\end{frame}}
                            |\\title{${maskTeXChars(project.name)}}
                            |\\date{}
@@ -53,9 +65,9 @@ task generateLaTeX(dependsOn: downloadPromptList) {
     }
 }
 
-task compileLaTeX(type: Exec, dependsOn: generateLaTeX) {
+task compileLaTeX(type: Exec, dependsOn: [generateLaTeX, synthesizeBeep]) {
     def texFile = generateLaTeX.outputs.files.singleFile
-    inputs.files texFile
+    inputs.files texFile, synthesizeBeep.outputs.files.singleFile
     outputs.files file("$buildDir/prompts.pdf")
     executable 'latexmk'
     args '-quiet', '-pdf', texFile
