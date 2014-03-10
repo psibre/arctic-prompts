@@ -1,3 +1,5 @@
+defaultTasks 'compileLaTeX'
+
 apply plugin: 'base'
 
 buildscript {
