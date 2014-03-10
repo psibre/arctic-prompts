@@ -1,3 +1,5 @@
+apply plugin: 'base'
+
 buildscript {
     repositories {
         mavenCentral()
@@ -30,7 +32,7 @@ task generateLaTeX(dependsOn: downloadPromptList) {
     doLast {
         texFile.withWriter { tex ->
             tex.println """% !TEX encoding = UTF-8 Unicode
-                           |\\documentclass[aspectratio=1610]{beamer}
+                           |\\documentclass[aspectratio=${aspectRatio.replace('x', '')}]{beamer}
                            |\\usepackage[utf8]{inputenc}
                            |\\newcommand*{\\prompt}[2]{%
                            |\\begin{frame}{#1}
@@ -54,7 +56,7 @@ task generateLaTeX(dependsOn: downloadPromptList) {
 task compileLaTeX(type: Exec, dependsOn: generateLaTeX) {
     def texFile = generateLaTeX.outputs.files.singleFile
     inputs.files texFile
-    outputs.files "$buildDir/prompts.pdf"
+    outputs.files file("$buildDir/prompts.pdf")
     executable 'latexmk'
     args '-quiet', '-pdf', texFile
     workingDir buildDir
