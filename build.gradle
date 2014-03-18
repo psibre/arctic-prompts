@@ -39,7 +39,7 @@ task generateText(dependsOn: downloadPromptList) {
 task synthesizeBeep(type: Exec) {
     def beepWavFile = file("$buildDir/$beepWavFileName")
     outputs.files beepWavFile
-    executable 'sox'
+    executable sox
     args '-n', beepWavFileName, 'synth', beepDuration, 'sin', beepFrequency
     workingDir buildDir
 }
@@ -48,7 +48,7 @@ task transcodeBeep(type: Exec, dependsOn: synthesizeBeep) {
     def beepFile = file("$buildDir/$beepFileName")
     def beepWavFile = file("$buildDir/$beepWavFileName")
     outputs.files beepFile
-    executable 'lame'
+    executable lame
     args beepWavFile, beepFile
     workingDir buildDir
 }
