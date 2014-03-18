@@ -14,6 +14,7 @@ Or possibly on Windows,
  
 1. [Java](https://www.java.com/download/)
 2. [SoX](http://sox.sourceforge.net/)
+2. [lame](http://lame.sourceforge.net/)
 3. An up-to-date LaTeX installation, preferably [TeX
 Live](https://www.tug.org/texlive/), including the
 [latexmk](http://www.ctan.org/pkg/latexmk/) build tool and the packages

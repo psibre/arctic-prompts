@@ -44,7 +44,7 @@ task synthesizeBeep(type: Exec) {
     workingDir buildDir
 }
 
-task transcodeBeep(type: Exec, dependsOn:synthesizeBeep) {
+task transcodeBeep(type: Exec, dependsOn: synthesizeBeep) {
     def beepFile = file("$buildDir/$beepFileName")
     def beepWavFile = file("$buildDir/$beepWavFileName")
     outputs.files beepFile
