@@ -29,10 +29,19 @@ def maskTeXChars(String str) {
 }
 
 task synthesizeBeep(type: Exec) {
-    def beepFile = file("$buildDir/$beepFileName")
-    outputs.files beepFile
+    def beepWavFile = file("$buildDir/$beepWavFileName")
+    outputs.files beepWavFile
     executable 'sox'
-    args '-n', beepFileName, 'synth', beepDuration, 'sin', beepFrequency
+    args '-n', beepWavFileName, 'synth', beepDuration, 'sin', beepFrequency
+    workingDir buildDir
+}
+
+task transcodeBeep(type: Exec, dependsOn:synthesizeBeep) {
+    def beepFile = file("$buildDir/$beepFileName")
+    def beepWavFile = file("$buildDir/$beepWavFileName")
+    outputs.files beepFile
+    executable 'lame'
+    args beepWavFile, beepFile
     workingDir buildDir
 }
 
@@ -67,7 +76,7 @@ task generateLaTeX(dependsOn: downloadPromptList) {
     }
 }
 
-task compileLaTeX(type: Exec, dependsOn: [generateLaTeX, synthesizeBeep]) {
+task compileLaTeX(type: Exec, dependsOn: [generateLaTeX, transcodeBeep]) {
     def texFile = generateLaTeX.outputs.files.singleFile
     inputs.files texFile, synthesizeBeep.outputs.files.singleFile
     outputs.files file("$buildDir/prompts.pdf")
