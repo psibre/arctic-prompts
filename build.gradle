@@ -88,7 +88,3 @@ task compileLaTeX(type: Exec, dependsOn: [generateLaTeX, synthesizeBeep]) {
     args '-quiet', '-pdf', texFile
     workingDir buildDir
 }
-
-task wrapper(type: Wrapper) {
-    gradleVersion = '1.11'
-}
