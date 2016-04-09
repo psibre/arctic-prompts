@@ -36,7 +36,7 @@ task transcodeBeep(type: Exec, dependsOn: synthesizeBeep) {
     def beepWavFile = file("$buildDir/$beepWavFileName")
     outputs.files beepFile
     executable lame
-    args beepWavFile, beepFile
+    args '--quiet', beepWavFile, beepFile
     workingDir buildDir
 }
 
