@@ -13,7 +13,7 @@ Or possibly on Windows,
 ## Requirements ##
  
 1. [Java](https://www.java.com/download/)
-2. [SoX](http://sox.sourceforge.net/)
+2. [SoX](http://sox.sourceforge.net/) **with MP3 support** (use the `lame` branch if you can't encode MP3 directly with sox)
 2. [lame](http://lame.sourceforge.net/)
 3. An up-to-date LaTeX installation, preferably [TeX
 Live](https://www.tug.org/texlive/), including the

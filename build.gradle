@@ -2,38 +2,25 @@ defaultTasks 'compileLaTeX'
 
 apply plugin: 'base'
 
-buildscript {
-    repositories {
-        mavenCentral()
+repositories {
+    ivy {
+        url 'http://festvox.org/cmu_arctic/'
+        layout 'pattern', {
+            artifact '[module].[ext]'
+        }
     }
-    dependencies {
-        classpath 'de.undercouch:gradle-download-task:0.5'
-    }
+}
+configurations.create 'data'
+dependencies {
+    data name: 'cmuarctic', ext: 'data'
 }
 
 buildDir.mkdirs()
 
-import de.undercouch.gradle.tasks.download.Download
-
-task downloadPromptList(type: Download) {
-    def promptsFile = 'cmuarctic.data'
-    src "http://festvox.org/cmu_arctic/$promptsFile"
-    dest buildDir
-    overwrite false
-    outputs.files file("$buildDir/$promptsFile")
-}
-
-task generateText(dependsOn: downloadPromptList) {
-    def promptsFile = downloadPromptList.outputs.files.singleFile
-    inputs.files promptsFile
-    outputs.files fileTree(buildDir).include('*.txt')
-    doLast {
-        promptsFile.eachLine {
-            def fields = it.split('[()" ]{2}')
-            def (basename, text) = fields[1..2]
-            file("$buildDir/${basename}.txt").withWriter { it.println(text) }
-        }
-    }
+task downloadPromptList(type: Copy) {
+    from configurations.data
+    into buildDir
+    rename { 'prompts.txt' }
 }
 
 task synthesizeBeep(type: Exec) {
@@ -58,10 +45,9 @@ def maskTeXChars(String str) {
     return str.replaceAll("([&_])", '\\\\$1')
 }
 
-task generateLaTeX(dependsOn: downloadPromptList) {
-    def promptsFile = downloadPromptList.outputs.files.singleFile
+task generateLaTeX {
     def texFile = file("$buildDir/prompts.tex")
-    inputs.files promptsFile
+    inputs.files downloadPromptList
     outputs.files texFile
     doLast {
         texFile.withWriter { tex ->
@@ -79,7 +65,7 @@ task generateLaTeX(dependsOn: downloadPromptList) {
                            |\\date{}
                            |\\begin{document}
                            |\\frame{\\titlepage}""".stripMargin()
-            promptsFile.eachLine {
+            file("$buildDir/prompts.txt").eachLine {
                 def fields = maskTeXChars(it).split('[()" ]{2}')
                 def (basename, text) = fields[1..2]
                 tex.println "\\prompt{$basename}{$text}"
@@ -91,13 +77,9 @@ task generateLaTeX(dependsOn: downloadPromptList) {
 
 task compileLaTeX(type: Exec, dependsOn: [generateLaTeX, transcodeBeep]) {
     def texFile = generateLaTeX.outputs.files.singleFile
-    inputs.files texFile, synthesizeBeep.outputs.files.singleFile
+    inputs.files texFile, synthesizeBeep
     outputs.files file("$buildDir/prompts.pdf")
     executable 'latexmk'
     args '-quiet', '-pdf', texFile
     workingDir buildDir
-}
-
-task wrapper(type: Wrapper) {
-    gradleVersion = '1.11'
 }
